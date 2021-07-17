@@ -6,46 +6,34 @@ namespace ServerCore
 {
     class Program
     {
-        static void MainThread(object state)
+        // 전역 변수는 메인과 쓰레드에서 동시에 접근 가능.
+        static bool _stop = false;
+
+        static void ThreadMain()
         {
-            for(int i=0; i<5; i++)
-                 Console.WriteLine("Hello Thread!");
+            Console.WriteLine("쓰레드 시작 !");
+
+            while (_stop == false)
+            { 
+                // 누군가 stop 신호를 해주기를 기다린다.
+            }
+            
+            Console.WriteLine("쓰레드 종료 !");
         }
 
         static void Main(string[] args)
         {
-            ThreadPool.SetMinThreads(1, 1);
-            ThreadPool.SetMaxThreads(5, 5);
+            Task t = new Task(ThreadMain);
+            t.Start();
 
+            Thread.Sleep(1000); // 1초 대기
 
-            for (int i = 0; i < 5; i++)
-            {
-                Task t = new Task(() => { while (true) { } }, TaskCreationOptions.LongRunning);
-                t.Start();
-            }
+            _stop = true;
 
-            //for (int i=0; i< 4; i++)
-            //    ThreadPool.QueueUserWorkItem((obj) => { while (true) { } });
-            
-
-            ThreadPool.QueueUserWorkItem(MainThread);
-
-            //for (int i = 0; i < 1000; i++)
-            //{
-            //    Thread t = new Thread(MainThread);
-            //    //t.Name = "Test Thread";
-            //    t.IsBackground = true;
-            //    t.Start();
-            //}
-
-            //Console.WriteLine("Waiting For Thread!");
-        
-            //t.Join();
-            //Console.WriteLine("Hello World!");
-            while(true)
-            {
-
-            }
+            Console.WriteLine("Stop 호출");
+            Console.WriteLine("종료 대기중");
+            t.Wait(); // 쓰레드가 끝남을 알림.
+            Console.WriteLine("종료 성공");
         }
     }
 }
