@@ -4,33 +4,20 @@ using System.Threading.Tasks;
 
 namespace ServerCore
 {
-    class Lock
-    {
-        // bool <= 커널에서 관리하는 변수
-        AutoResetEvent _available = new AutoResetEvent(true);
 
-        public void Acquire()
-        {
-            _available.WaitOne(); // 입장 시도 // 자동으로 Reset 해줌
-            //_available.Reset(); // bool = false 
-        }
-        public void Release()
-        {
-            _available.Set(); // flag = true
-        }
-    }
+      
 
     class Program
     {
         static int _num = 0;
-        static Lock _lock = new Lock();
+        static Mutex _lock = new Mutex();
         static void Thread_1()
         {
             for(int i=0; i<10000; i++)
             {
-                _lock.Acquire();
+                _lock.WaitOne();
                 _num++;
-                _lock.Release();
+                _lock.ReleaseMutex();
             }
         }
 
@@ -38,9 +25,9 @@ namespace ServerCore
         {
             for (int i = 0; i < 10000; i++)
             {
-                _lock.Acquire();
+                _lock.WaitOne();
                 _num--;
-                _lock.Release();
+                _lock.ReleaseMutex();
             }
         }
 
