@@ -4,61 +4,50 @@ using System.Threading.Tasks;
 
 namespace ServerCore
 {
-    // 메모리 배리어
-    // A) 코드 재배치 억제
-    // B) 가시성
-
-    // 1) Full Memory Barrier (ASM MFENCE, C# Tread.MemoryBarrier ) : Store/Load 둘 다 막는다
-    // 2) Store Memory Barrier ( ASM SFENCE ) : Store만 막는다
-    // 3) Load Memory Barrier ( ASM LFENCE ) : Load만 막는다
-
     class Program
     {
-        static volatile int x = 0;
-        static volatile int y = 0;
-        static volatile int r1 = 0;
-        static volatile int r2 = 0;
+        static int number = 0;
 
         static void Thread_1()
         {
-            y = 1; // Store y
+            // atomic = 원자성
 
-            //------------------------------------
-            Thread.MemoryBarrier();
+            for (int i = 0; i < 100000; i++)
+            {
+                // All or Nothing
+                // 먼저 실행되고 있으면 주도권을 갖고 계속 실행
+                // 그동안 Decrement는 실행되고 있지 않다.
+                Interlocked.Increment(ref number);
+                // number++; 아래와 같음
+                
 
-            r1 = x; // Load x
+                //int temp = number; // 0 
+                //temp += 1; // 1 
+                //number = temp; // number = 1
+            }
         }
-
         static void Thread_2()
         {
-            x = 1; // Store x
-            
-            //------------------------------------
-            Thread.MemoryBarrier();
-            
-            r2 = y; // Load y
-        }
+            for (int i = 0; i < 100000; i++)
+            {
+                Interlocked.Decrement(ref number);
+                //int temp = number; // 0 
+                //temp -= 1; // -1 
+                //number = temp; // number = -1
 
+                //number--;
+            }
+        }
         static void Main(string[] args)
         {
-            int count = 0;
-            while(true)
-            {
-                count++;
-                x = y = r1 = r2 = 0;
+            Task t1 = new Task(Thread_1);
+            Task t2 = new Task(Thread_2);
+            t1.Start();
+            t2.Start();
 
-                Task t1 = new Task(Thread_1);
-                Task t2 = new Task(Thread_2);
-                t1.Start();
-                t2.Start();
+            Task.WaitAll(t1, t2);
 
-                Task.WaitAll(t1, t2);
-
-                if (r1 == 0 && r2 == 0)
-                    break;
-            }
-
-            Console.WriteLine($"{count}번만에 빠져나옴!");
+            Console.WriteLine(number);
         }
     }
 }
