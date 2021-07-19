@@ -4,43 +4,66 @@ using System.Threading.Tasks;
 
 namespace ServerCore
 {
-
-      
-
     class Program
     {
-        static int _num = 0;
-        static Mutex _lock = new Mutex();
-        static void Thread_1()
+        // 1. 근성
+        // 2. 양보
+        // 3. 갑질
+
+        // 상호배제
+        // Monitor
+        static object _lock = new object();
+        static SpinLock _lock2 = new SpinLock(); // 내부 구현으로는 중간에 한번씩 양보함.
+        static Mutex _lock3 = new Mutex();
+
+        // [] [] [] [] [] [] 
+        class Reward
         {
-            for(int i=0; i<10000; i++)
-            {
-                _lock.WaitOne();
-                _num++;
-                _lock.ReleaseMutex();
-            }
+
         }
 
-        static void Thread_2()
+        // RWLock ReaderWriteLock
+        static ReaderWriterLockSlim _lock4 = new ReaderWriterLockSlim();
+
+        // 99.999999%
+        static Reward GetRewardById(int id)
         {
-            for (int i = 0; i < 10000; i++)
+            _lock4.EnterReadLock();
+
+            _lock4.ExitReadLock();
+
+            lock(_lock)
             {
-                _lock.WaitOne();
-                _num--;
-                _lock.ReleaseMutex();
+
             }
+            return null;
+        }
+
+        // 0.000001%
+        static void AddReward(Reward reward)
+        {
+            _lock4.EnterWriteLock();
+
+            _lock4.ExitWriteLock();
         }
 
         static void Main(string[] args)
         {
-            Task t1 = new Task(Thread_1);
-            Task t2 = new Task(Thread_2);
-            t1.Start();
-            t2.Start();
+            lock(_lock)
+            {
 
-            Task.WaitAll(t1, t2);
+            }
 
-            Console.WriteLine(_num);
+            bool lockTaken = false;
+            try
+            {
+                _lock2.Enter(ref lockTaken);
+            }
+            finally
+            {
+                if(lockTaken)
+                _lock2.Exit();
+            }
         }
     }
 }
