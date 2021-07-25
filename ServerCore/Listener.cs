@@ -44,7 +44,6 @@ namespace ServerCore
         {
             if (args.SocketError == SocketError.Success)
             {
-                // TODO
                 _onAcceptHandler?.Invoke(args.AcceptSocket);
             }
             else

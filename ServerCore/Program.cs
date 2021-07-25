@@ -15,19 +15,15 @@ namespace ServerCore
         {
             try
             {
-                // 받는다
-                byte[] recvBuff = new byte[1024];
-                int recyBytes = clientSocket.Receive(recvBuff);
-                string recvData = Encoding.UTF8.GetString(recvBuff, 0, recyBytes);
-                Console.WriteLine($"[From Client] {recvData}");
+                Session session = new Session();
+                session.Start(clientSocket);
 
-                // 보낸다
-                byte[] sendBuff = Encoding.UTF8.GetBytes("Welcome to MMORPG Server !");
-                clientSocket.Send(sendBuff);
+                byte[] sendBuff = Encoding.UTF8.GetBytes("Welcome to MMORPG Server ! ");
+                session.Send(sendBuff);
 
-                // 쫓아낸다
-                clientSocket.Shutdown(SocketShutdown.Both);
-                clientSocket.Close();
+                Thread.Sleep(1000);
+
+                session.Disconnect();
             }
             catch (Exception e)
             {
@@ -47,7 +43,7 @@ namespace ServerCore
             // 문지기
 
 
-            _listener.Init(endPoint,OnAcceptHandler);
+            _listener.Init(endPoint, OnAcceptHandler);
             Console.WriteLine("Listening...");
 
             while (true)
